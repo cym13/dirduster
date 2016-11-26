@@ -9,26 +9,27 @@ import requests;
 immutable helpMsg =
 "Fast brute force of web directories
 
-Usage: dirduster [-h] [-n NUM] -f FILE URL...
+Usage: dirduster [-h] [-v] [-d] [-n NUM] -f FILE URL...
 
 Arguments:
     URL     Urls to bruteforce
 
 Options:
-    -h, --help       Print this help and exit
-    -v, --version    Print the version and exit
-    -n, --num NUM    Number of threads to use, default is 10
-    -f, --file FILE  Entries file
+    -h, --help         Print this help and exit
+    -v, --version      Print the version and exit
+    -d, --directories  Identify and search directories
+    -n, --num NUM      Number of threads to use, default is 10
+    -f, --file FILE    Entries file
 ";
 
 
 immutable invalidCodes = [0, 400, 403, 404, 405, 502];
 
-// TODO Implement recursion
 string[] scanUrl(
-        string baseUrl,
-        immutable(string)[] entries,
-        Request[] requestPool) {
+            string baseUrl,
+            immutable(string)[] entries,
+            Request[] requestPool,
+            bool checkDirs) {
 
     try {
         URI(baseUrl);
@@ -60,10 +61,19 @@ string[] scanUrl(
 
             immutable fullUri = r.uri.uri;
 
-            writefln("%s\t(CODE:%d:SIZE:%d)",
+            writefln("%s\tCODE:%d SIZE:%d",
                      fullUri, r.code, r.responseBody.length);
 
-            if (fullUri.endsWith("/"))
+            if (!checkDirs)
+                continue;
+
+            if (fullUri.endsWith("/")) {
+                newUrlsPool[i] ~= fullUri;
+                continue;
+            }
+
+            r = rq.get(fullUri ~ "/");
+            if (!invalidCodes.canFind(r.code))
                 newUrlsPool[i] ~= fullUri;
         }
     }
@@ -77,13 +87,13 @@ int main(string[] args) {
     import std.file;
     import std.string: splitLines;
 
-    auto arguments = docopt.docopt(helpMsg, args[1..$], true, "0.1.0");
+    auto arguments = docopt.docopt(helpMsg, args[1..$], true, "0.2.0");
 
     auto baseUrls   = arguments["URL"].asList;
     auto entryFile  = arguments["--file"].toString;
-
     auto numThreads = arguments["--num"].isNull ?
                         10 : arguments["--num"].toString.to!uint;
+    auto checkDirs  = !arguments["--directories"].isNull;
 
     defaultPoolThreads(numThreads);
 
@@ -103,12 +113,22 @@ int main(string[] args) {
         rq.sslSetVerifyPeer(false);
     }
 
-    foreach (baseUrl ; baseUrls) {
-        if (!baseUrl.endsWith("/"))
-            baseUrl ~= "/";
+    while (baseUrls.length) {
+        bool[string] oldUrls;
 
-        writeln("\n-- Scanning ", baseUrl, " --\n");
-        scanUrl(baseUrl, entries, requestPool);
+        baseUrls = sort(baseUrls).uniq.array;
+
+        string[] newUrls;
+        foreach (baseUrl ; baseUrls) {
+            if (!baseUrl.endsWith("/"))
+                baseUrl ~= "/";
+
+            writeln("\n-- Scanning ", baseUrl, " --\n");
+            newUrls = scanUrl(baseUrl, entries, requestPool, checkDirs);
+        }
+
+        baseUrls = newUrls.filter!(url => url !in oldUrls).array;
+        baseUrls.each!(url => oldUrls[url] = true);
     }
 
     return 0;
