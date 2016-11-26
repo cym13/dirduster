@@ -1,0 +1,13 @@
+{
+	"name": "dirduster",
+	"authors": [
+		"Cédric Picard"
+	],
+	"dependencies": {
+		"requests": "~>0.3.2",
+		"docopt":   "~>0.6.1-b.5"
+	},
+	"description": "Fast web directory bruteforce",
+	"copyright": "Copyright © 2016, Cédric Picard",
+	"license": "GPLv3"
+}
