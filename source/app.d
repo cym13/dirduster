@@ -9,7 +9,7 @@ import requests;
 immutable helpMsg =
 "Fast brute force of web directories
 
-Usage: dirduster [-h] [-v] [-d] [-n NUM] -f FILE URL...
+Usage: dirduster [options] -f FILE URL...
 
 Arguments:
     URL     Urls to bruteforce
@@ -25,17 +25,41 @@ Options:
 
 immutable invalidCodes = [0, 400, 403, 404, 405, 502];
 
+string testEntry(Request rq, string baseUrl, string entry, bool checkDirs) {
+    string url = baseUrl ~ entry;
+
+    auto r = rq.get(url);
+
+    if (invalidCodes.canFind(r.code))
+        return null;
+
+    immutable fullUri = r.uri.uri;
+
+    writefln("%s\tCODE:%d SIZE:%d", fullUri, r.code, r.responseBody.length);
+
+    if (!checkDirs)
+        return null;
+
+    if (fullUri.endsWith("/"))
+        return fullUri;
+
+    r = rq.get(fullUri ~ "/");
+    if (!invalidCodes.canFind(r.code))
+        return fullUri;
+
+    return null;
+}
+
 string[] scanUrl(
             string baseUrl,
             immutable(string)[] entries,
             Request[] requestPool,
             bool checkDirs) {
 
-    try {
+    try
         URI(baseUrl);
-    } catch (UriException) {
+    catch (UriException)
         return [];
-    }
 
     immutable numThreads = requestPool.length;
 
@@ -53,28 +77,9 @@ string[] scanUrl(
         immutable(string)[] localEntries = entries[firstEntry .. lastEntry];
 
         foreach (entry ; localEntries) {
-            stdout.flush;
-            auto r = rq.get(baseUrl ~ entry);
-
-            if (invalidCodes.canFind(r.code))
-                continue;
-
-            immutable fullUri = r.uri.uri;
-
-            writefln("%s\tCODE:%d SIZE:%d",
-                     fullUri, r.code, r.responseBody.length);
-
-            if (!checkDirs)
-                continue;
-
-            if (fullUri.endsWith("/")) {
-                newUrlsPool[i] ~= fullUri;
-                continue;
-            }
-
-            r = rq.get(fullUri ~ "/");
-            if (!invalidCodes.canFind(r.code))
-                newUrlsPool[i] ~= fullUri;
+            string url = testEntry(rq, baseUrl, entry, checkDirs);
+            if (url)
+                newUrlsPool[i] ~= url;
         }
     }
 
@@ -97,9 +102,8 @@ int main(string[] args) {
 
     defaultPoolThreads(numThreads);
 
-    if (!entryFile.length) {
+    if (!entryFile.length)
         return 1;
-    }
 
     immutable string[] entries = entryFile
                                     .readText
@@ -109,9 +113,8 @@ int main(string[] args) {
     Request[] requestPool;
     requestPool.length = numThreads;
 
-    foreach (ref rq ; requestPool) {
+    foreach (ref rq ; requestPool)
         rq.sslSetVerifyPeer(false);
-    }
 
     while (baseUrls.length) {
         bool[string] oldUrls;
