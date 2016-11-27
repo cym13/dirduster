@@ -41,9 +41,9 @@ TODO
 - Specify your own list of invalid HTTP codes
 - Specify a cookie string
 - Add custom HEADER headers
-- Allow to pipe a list of entries
 - Allow the use of proxies
 - Allow HTTP basic authentication
+- Allow using other methods
 
 Known bugs
 ==========

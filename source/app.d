@@ -52,7 +52,7 @@ string testEntry(Request rq, string baseUrl, string entry, bool checkDirs) {
 
 string[] scanUrl(
             string baseUrl,
-            immutable(string)[] entries,
+            const(string)[] entries,
             Request[] requestPool,
             bool checkDirs) {
 
@@ -74,9 +74,7 @@ string[] scanUrl(
         if (firstEntry > lastEntry)
             continue;
 
-        immutable(string)[] localEntries = entries[firstEntry .. lastEntry];
-
-        foreach (entry ; localEntries) {
+        foreach (entry ; entries[firstEntry .. lastEntry]) {
             string url = testEntry(rq, baseUrl, entry, checkDirs);
             if (url)
                 newUrlsPool[i] ~= url;
@@ -86,18 +84,26 @@ string[] scanUrl(
     return join(newUrlsPool);
 }
 
-int main(string[] args) {
-    import docopt;
-    import std.conv;
+auto loadEntries(string entryFile) {
     import std.file;
     import std.string: splitLines;
 
-    auto arguments = docopt.docopt(helpMsg, args[1..$], true, "0.2.0");
+    if (entryFile == "-")
+        return stdin.byLineCopy(KeepTerminator.no).array;
+    return entryFile.readText.splitLines(KeepTerminator.no).array;
+}
+
+int main(string[] args) {
+    import docopt;
+    import std.conv;
+
+    auto arguments = docopt.docopt(helpMsg, args[1..$], true, "0.3.0");
 
     auto baseUrls   = arguments["URL"].asList;
     auto entryFile  = arguments["--file"].toString;
-    auto numThreads = arguments["--num"].isNull ?
-                        10 : arguments["--num"].toString.to!uint;
+    auto numThreads = arguments["--num"].isNull
+                        ? 10
+                        : arguments["--num"].toString.to!uint;
     auto checkDirs  = !arguments["--directories"].isNull;
 
     defaultPoolThreads(numThreads);
@@ -105,16 +111,17 @@ int main(string[] args) {
     if (!entryFile.length)
         return 1;
 
-    immutable string[] entries = entryFile
-                                    .readText
-                                    .splitLines(KeepTerminator.no)
-                                    .array;
+    auto entries = loadEntries(entryFile);
 
     Request[] requestPool;
     requestPool.length = numThreads;
 
+    // Fill the request pool
     foreach (ref rq ; requestPool)
         rq.sslSetVerifyPeer(false);
+
+    if (baseUrls.any!(x => !x.beginsWith("http")))
+        writeln("WARNING: make sure you specified the right protocol");
 
     while (baseUrls.length) {
         bool[string] oldUrls;
