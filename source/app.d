@@ -120,7 +120,7 @@ int main(string[] args) {
     foreach (ref rq ; requestPool)
         rq.sslSetVerifyPeer(false);
 
-    if (baseUrls.any!(x => !x.beginsWith("http")))
+    if (baseUrls.any!((string x) => !x.startsWith("http")))
         writeln("WARNING: make sure you specified the right protocol");
 
     while (baseUrls.length) {
