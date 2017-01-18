@@ -58,13 +58,14 @@ string testEntry(
     if (fullUri.endsWith("/"))
         return fullUri;
 
-    url = fullUri ~ "/";
+    // TODO move this up, we shouldn't add entries here
+    immutable fullDirUri = fullUri ~ "/";
 
-    r = rq.get(url);
-    cookies.each!((k,v) => rq.setCookie(url, k, v));
+    r = rq.get(fullDirUri);
+    cookies.each!((k,v) => rq.setCookie(fullDirUri, k, v));
 
     if (!invalidCodes.canFind(r.code))
-        return url;
+        return fullDirUri;
 
     return null;
 }
@@ -125,6 +126,9 @@ int main(string[] args) {
                         ? 10
                         : arguments["--num"].toString.to!uint;
     auto checkDirs  = !arguments["--directories"].isNull;
+    auto cookieStr  = arguments["--cookies"].isNull
+                        ? []
+                        : arguments["--cookies"].toString.split(",");
 
     defaultPoolThreads(numThreads);
 
@@ -135,7 +139,7 @@ int main(string[] args) {
 
     string[string] cookies;
 
-    foreach (cookie ; arguments["--cookies"].toString.splitter(",")) {
+    foreach (cookie ; cookieStr) {
         auto splitHere = cookie.countUntil("=");
         string attr = cookie[0..splitHere];
         string val  = cookie[splitHere+1..$];
@@ -152,9 +156,8 @@ int main(string[] args) {
     if (baseUrls.any!((string x) => !x.startsWith("http")))
         writeln("WARNING: make sure you specified the right protocol");
 
+    bool[string] oldUrls;
     while (baseUrls.length) {
-        bool[string] oldUrls;
-
         baseUrls = sort(baseUrls).uniq.array;
 
         string[] newUrls;
