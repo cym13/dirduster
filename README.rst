@@ -23,17 +23,19 @@ Documentation
 
     Fast brute force of web directories
 
-    Usage: dirduster [-h] [-v] [-d] [-n NUM] -f FILE URL...
+    Usage: dirduster [options] -f FILE URL...
 
     Arguments:
         URL     Urls to bruteforce
 
     Options:
-        -h, --help         Print this help and exit
-        -v, --version      Print the version and exit
-        -d, --directories  Identify and search directories
-        -n, --num NUM      Number of threads to use, default is 10
-        -f, --file FILE    Entries file
+        -h, --help             Print this help and exit
+        -v, --version          Print the version and exit
+        -a, --auth CREDS       Basic authentication in the format login:password
+        -d, --directories      Identify and search directories
+        -n, --num NUM          Number of threads to use, default is 10
+        -c, --cookies COOKIES  User-defined cookies in the format a1=v1,a2=v2
+        -f, --file FILE        Entries file
 
 TODO
 ====

@@ -119,7 +119,7 @@ int main(string[] args) {
     import docopt;
     import std.conv;
 
-    auto arguments = docopt.docopt(helpMsg, args[1..$], true, "0.3.0");
+    auto arguments = docopt.docopt(helpMsg, args[1..$], true, "0.4.0");
 
     auto baseUrls   = arguments["URL"].asList;
     auto entryFile  = arguments["--file"].toString;
