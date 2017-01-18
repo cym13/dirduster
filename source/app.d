@@ -18,6 +18,7 @@ Arguments:
 Options:
     -h, --help             Print this help and exit
     -v, --version          Print the version and exit
+    -a, --auth CREDS       Basic authentication in the format login:password
     -d, --directories      Identify and search directories
     -n, --num NUM          Number of threads to use, default is 10
     -c, --cookies COOKIES  User-defined cookies in the format a1=v1,a2=v2
@@ -122,13 +123,16 @@ int main(string[] args) {
 
     auto baseUrls   = arguments["URL"].asList;
     auto entryFile  = arguments["--file"].toString;
+    auto checkDirs  = !arguments["--directories"].isNull;
     auto numThreads = arguments["--num"].isNull
                         ? 10
                         : arguments["--num"].toString.to!uint;
-    auto checkDirs  = !arguments["--directories"].isNull;
     auto cookieStr  = arguments["--cookies"].isNull
                         ? []
                         : arguments["--cookies"].toString.split(",");
+    auto basicAuth  = arguments["--auth"].isNull
+                        ? ""
+                        : arguments["--auth"].toString;
 
     defaultPoolThreads(numThreads);
 
@@ -152,6 +156,16 @@ int main(string[] args) {
     // Fill the request pool
     foreach (ref rq ; requestPool)
         rq.sslSetVerifyPeer(false);
+
+    if (basicAuth != "") {
+        auto splitHere  = basicAuth.countUntil(":");
+        string login    = basicAuth[0..splitHere];
+        string password = basicAuth[splitHere+1..$];
+
+
+        foreach (ref rq ; requestPool)
+            rq.authenticator = new BasicAuthentication(login, password);
+    }
 
     if (baseUrls.any!((string x) => !x.startsWith("http")))
         writeln("WARNING: make sure you specified the right protocol");
