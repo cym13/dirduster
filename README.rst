@@ -33,7 +33,7 @@ Documentation
         -v, --version          Print the version and exit
         -a, --auth CREDS       Basic authentication in the format login:password
         -d, --directories      Identify and search directories
-        -n, --num NUM          Number of threads to use, default is 10
+        -t, --threads NUM      Number of threads to use, default is 10
         -c, --cookies COOKIES  User-defined cookies in the format a1=v1,a2=v2
         -f, --file FILE        Entries file
 
