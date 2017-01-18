@@ -7,6 +7,9 @@ import std.parallelism;
 import requests;
 import requests.http: Cookie;
 
+/**
+ * Help message, standard unix format compatible with docopt.
+ */
 immutable helpMsg =
 "Fast brute force of web directories
 
@@ -26,56 +29,28 @@ Options:
 ";
 
 
+/**
+ * Default codes to ignore in answer to requests
+ */
 immutable invalidCodes = [0, 400, 403, 404, 405, 502];
 
+
+/**
+ * Helper: add a cookie to a request
+ */
 void setCookie(Request rq, string url, string attr, string val) {
     string domain = url.split("/")[2];
     string path   = "/" ~ url.split("/")[3..$].join("/");
     rq.cookie(rq.cookie ~ Cookie(domain, path, attr, val));
 }
 
-string testEntry(
-            Request rq,
-            string baseUrl,
-            string entry,
-            bool checkDirs,
-            string[string] cookies) {
-
-    string url = baseUrl ~ entry;
-
-    auto r = rq.get(url);
-    cookies.each!((k,v) => rq.setCookie(url, k, v));
-
-    if (invalidCodes.canFind(r.code))
-        return null;
-
-    immutable fullUri = r.uri.uri;
-
-    writefln("%s\tCODE:%d SIZE:%d", fullUri, r.code, r.responseBody.length);
-
-    if (!checkDirs)
-        return null;
-
-    if (fullUri.endsWith("/"))
-        return fullUri;
-
-    // TODO move this up, we shouldn't add entries here
-    immutable fullDirUri = fullUri ~ "/";
-
-    r = rq.get(fullDirUri);
-    cookies.each!((k,v) => rq.setCookie(fullDirUri, k, v));
-
-    if (!invalidCodes.canFind(r.code))
-        return fullDirUri;
-
-    return null;
-}
-
+/**
+ * Scan a given url given a list of entries
+ */
 string[] scanUrl(
             string baseUrl,
             const(string)[] entries,
             Request[] requestPool,
-            bool checkDirs,
             string[string] cookies) {
 
     try
@@ -97,33 +72,56 @@ string[] scanUrl(
             continue;
 
         foreach (entry ; entries[firstEntry .. lastEntry]) {
-            string url = testEntry(rq, baseUrl, entry, checkDirs, cookies);
-            if (url)
-                newUrlsPool[i] ~= url;
+            cookies.each!((k,v) => rq.setCookie(baseUrl ~ entry, k, v));
+
+            string url = baseUrl ~ entry;
+            auto   r   = rq.get(url);
+
+            if (invalidCodes.canFind(r.code))
+                continue;
+
+            writefln("%s\tCODE:%d SIZE:%d",
+                     r.uri.uri, r.code, r.responseBody.length);
+            newUrlsPool[i] ~= r.uri.uri;
         }
     }
 
     return join(newUrlsPool);
 }
 
-auto loadEntries(string entryFile) {
-    import std.file;
+/**
+ * Load entries from a given file
+ */
+auto loadEntries(string entryFile, bool checkDirs) {
+    import std.file:   readText;
     import std.string: splitLines;
 
+    string[] results;
+
     if (entryFile == "-")
-        return stdin.byLineCopy(KeepTerminator.no).array;
-    return entryFile.readText.splitLines(KeepTerminator.no).array;
+        results = stdin.byLineCopy(KeepTerminator.no).array;
+    results = entryFile.readText.splitLines(KeepTerminator.no).array;
+
+    if (checkDirs) {
+        results ~= results.filter!(u => !u.endsWith("/") && u.length > 0)
+                          .map!(u => u ~ "/")
+                          .array;
+    }
+
+    return results;
 }
 
-int main(string[] args) {
-    import docopt;
-    import std.conv;
 
-    auto arguments = docopt.docopt(helpMsg, args[1..$], true, "0.4.0");
+int main(string[] args) {
+    import docopt: docopt;
+    import std.conv: to;
+
+    // I love docopt but this implementation sucks
+    auto arguments = docopt(helpMsg, args[1..$], true, "0.5.0");
 
     auto baseUrls   = arguments["URL"].asList;
     auto entryFile  = arguments["--file"].toString;
-    auto checkDirs  = !arguments["--directories"].isNull;
+    auto checkDirs  = arguments["--directories"].toString == "true";
     auto numThreads = arguments["--num"].isNull
                         ? 10
                         : arguments["--num"].toString.to!uint;
@@ -139,32 +137,33 @@ int main(string[] args) {
     if (!entryFile.length)
         return 1;
 
-    auto entries = loadEntries(entryFile);
+    auto entries = loadEntries(entryFile, checkDirs);
 
     string[string] cookies;
-
     foreach (cookie ; cookieStr) {
-        auto splitHere = cookie.countUntil("=");
-        string attr = cookie[0..splitHere];
-        string val  = cookie[splitHere+1..$];
+        immutable sep  = cookie.countUntil("=");
+        immutable attr = cookie[0..sep];
+        immutable val  = cookie[sep+1..$];
+
         cookies[attr] = val;
+    }
+
+    Auth authenticator;
+    if (basicAuth != "") {
+        immutable sep      = basicAuth.countUntil(":");
+        immutable login    = basicAuth[0..sep];
+        immutable password = basicAuth[sep+1..$];
+
+        authenticator = new BasicAuthentication(login, password);
     }
 
     Request[] requestPool;
     requestPool.length = numThreads;
 
     // Fill the request pool
-    foreach (ref rq ; requestPool)
+    foreach (ref rq ; requestPool) {
         rq.sslSetVerifyPeer(false);
-
-    if (basicAuth != "") {
-        auto splitHere  = basicAuth.countUntil(":");
-        string login    = basicAuth[0..splitHere];
-        string password = basicAuth[splitHere+1..$];
-
-
-        foreach (ref rq ; requestPool)
-            rq.authenticator = new BasicAuthentication(login, password);
+        rq.authenticator = authenticator;
     }
 
     if (baseUrls.any!((string x) => !x.startsWith("http")))
@@ -173,6 +172,7 @@ int main(string[] args) {
     bool[string] oldUrls;
     while (baseUrls.length) {
         baseUrls = sort(baseUrls).uniq.array;
+        baseUrls.each!(url => oldUrls[url] = true);
 
         string[] newUrls;
         foreach (baseUrl ; baseUrls) {
@@ -180,11 +180,10 @@ int main(string[] args) {
                 baseUrl ~= "/";
 
             writeln("\n-- Scanning ", baseUrl, " --\n");
-            newUrls = scanUrl(baseUrl, entries, requestPool, checkDirs, cookies);
+            newUrls = scanUrl(baseUrl, entries, requestPool, cookies);
         }
 
         baseUrls = newUrls.filter!(url => url !in oldUrls).array;
-        baseUrls.each!(url => oldUrls[url] = true);
     }
 
     return 0;
