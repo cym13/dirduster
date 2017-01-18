@@ -28,6 +28,7 @@ Options:
     -f, --file FILE        Entries file
 ";
 
+immutable vernum="0.5.1";
 
 /**
  * Default codes to ignore in answer to requests
@@ -113,40 +114,51 @@ auto loadEntries(string entryFile, bool checkDirs) {
 
 
 int main(string[] args) {
-    import docopt: docopt;
+    import std.getopt;
     import std.conv: to;
 
-    // I love docopt but this implementation sucks
-    auto arguments = docopt(helpMsg, args[1..$], true, "0.5.0");
+    string           entryFile;
+    bool             checkDirs;
+    uint             numThreads = 10;
+    string[string]   cookies;
+    string           basicAuth;
+    bool             versionWanted;
 
-    auto baseUrls   = arguments["URL"].asList;
-    auto entryFile  = arguments["--file"].toString;
-    auto checkDirs  = arguments["--directories"].toString == "true";
-    auto numThreads = arguments["--num"].isNull
-                        ? 10
-                        : arguments["--num"].toString.to!uint;
-    auto cookieStr  = arguments["--cookies"].isNull
-                        ? []
-                        : arguments["--cookies"].toString.split(",");
-    auto basicAuth  = arguments["--auth"].isNull
-                        ? ""
-                        : arguments["--auth"].toString;
+    try {
+        arraySep = ",";
+        auto arguments = getopt(args,
+                                std.getopt.config.bundling,
+                                std.getopt.config.caseSensitive,
+                                "f|file",        &entryFile,
+                                "d|directories", &checkDirs,
+                                "t|threads",     &numThreads,
+                                "c|cookies",     &cookies,
+                                "v|version",     &versionWanted,
+                                "a|auth",        &basicAuth);
 
-    defaultPoolThreads(numThreads);
+        if (arguments.helpWanted) {
+            write(helpMsg);
+            return 0;
+        }
+        if (versionWanted) {
+            writeln(vernum);
+            return 0;
+        }
 
-    if (!entryFile.length)
+    } catch (GetOptException ex) {
+        stderr.write(helpMsg);
         return 1;
+    }
+
+    string[] baseUrls = args[1..$];
+
+    if (!entryFile.length || !baseUrls.length) {
+        stderr.write(helpMsg);
+        return 1;
+    }
 
     auto entries = loadEntries(entryFile, checkDirs);
 
-    string[string] cookies;
-    foreach (cookie ; cookieStr) {
-        immutable sep  = cookie.countUntil("=");
-        immutable attr = cookie[0..sep];
-        immutable val  = cookie[sep+1..$];
-
-        cookies[attr] = val;
-    }
 
     Auth authenticator;
     if (basicAuth != "") {
@@ -157,14 +169,16 @@ int main(string[] args) {
         authenticator = new BasicAuthentication(login, password);
     }
 
+
+    defaultPoolThreads(numThreads);
     Request[] requestPool;
     requestPool.length = numThreads;
 
-    // Fill the request pool
     foreach (ref rq ; requestPool) {
         rq.sslSetVerifyPeer(false);
         rq.authenticator = authenticator;
     }
+
 
     if (baseUrls.any!((string x) => !x.startsWith("http")))
         writeln("WARNING: make sure you specified the right protocol");
