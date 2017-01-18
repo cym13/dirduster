@@ -5,6 +5,7 @@ import std.algorithm;
 import std.parallelism;
 
 import requests;
+import requests.http: Cookie;
 
 immutable helpMsg =
 "Fast brute force of web directories
@@ -15,20 +16,34 @@ Arguments:
     URL     Urls to bruteforce
 
 Options:
-    -h, --help         Print this help and exit
-    -v, --version      Print the version and exit
-    -d, --directories  Identify and search directories
-    -n, --num NUM      Number of threads to use, default is 10
-    -f, --file FILE    Entries file
+    -h, --help             Print this help and exit
+    -v, --version          Print the version and exit
+    -d, --directories      Identify and search directories
+    -n, --num NUM          Number of threads to use, default is 10
+    -c, --cookies COOKIES  User-defined cookies in the format a1=v1,a2=v2
+    -f, --file FILE        Entries file
 ";
 
 
 immutable invalidCodes = [0, 400, 403, 404, 405, 502];
 
-string testEntry(Request rq, string baseUrl, string entry, bool checkDirs) {
+void setCookie(Request rq, string url, string attr, string val) {
+    string domain = url.split("/")[2];
+    string path   = "/" ~ url.split("/")[3..$].join("/");
+    rq.cookie(rq.cookie ~ Cookie(domain, path, attr, val));
+}
+
+string testEntry(
+            Request rq,
+            string baseUrl,
+            string entry,
+            bool checkDirs,
+            string[string] cookies) {
+
     string url = baseUrl ~ entry;
 
     auto r = rq.get(url);
+    cookies.each!((k,v) => rq.setCookie(url, k, v));
 
     if (invalidCodes.canFind(r.code))
         return null;
@@ -43,9 +58,13 @@ string testEntry(Request rq, string baseUrl, string entry, bool checkDirs) {
     if (fullUri.endsWith("/"))
         return fullUri;
 
-    r = rq.get(fullUri ~ "/");
+    url = fullUri ~ "/";
+
+    r = rq.get(url);
+    cookies.each!((k,v) => rq.setCookie(url, k, v));
+
     if (!invalidCodes.canFind(r.code))
-        return fullUri;
+        return url;
 
     return null;
 }
@@ -54,7 +73,8 @@ string[] scanUrl(
             string baseUrl,
             const(string)[] entries,
             Request[] requestPool,
-            bool checkDirs) {
+            bool checkDirs,
+            string[string] cookies) {
 
     try
         URI(baseUrl);
@@ -75,7 +95,7 @@ string[] scanUrl(
             continue;
 
         foreach (entry ; entries[firstEntry .. lastEntry]) {
-            string url = testEntry(rq, baseUrl, entry, checkDirs);
+            string url = testEntry(rq, baseUrl, entry, checkDirs, cookies);
             if (url)
                 newUrlsPool[i] ~= url;
         }
@@ -113,6 +133,15 @@ int main(string[] args) {
 
     auto entries = loadEntries(entryFile);
 
+    string[string] cookies;
+
+    foreach (cookie ; arguments["--cookies"].toString.splitter(",")) {
+        auto splitHere = cookie.countUntil("=");
+        string attr = cookie[0..splitHere];
+        string val  = cookie[splitHere+1..$];
+        cookies[attr] = val;
+    }
+
     Request[] requestPool;
     requestPool.length = numThreads;
 
@@ -134,7 +163,7 @@ int main(string[] args) {
                 baseUrl ~= "/";
 
             writeln("\n-- Scanning ", baseUrl, " --\n");
-            newUrls = scanUrl(baseUrl, entries, requestPool, checkDirs);
+            newUrls = scanUrl(baseUrl, entries, requestPool, checkDirs, cookies);
         }
 
         baseUrls = newUrls.filter!(url => url !in oldUrls).array;
