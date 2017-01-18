@@ -47,14 +47,6 @@ TODO
 - Allow HTTP basic authentication
 - Allow using other methods
 
-Known bugs
-==========
-
-For some reason when using requests with lots of threads some messages about
-failed connections pop on stderr. I don't know why right now but the
-connection still ends up being done so you can safely ignore it for the
-moment.
-
 Building
 ========
 
