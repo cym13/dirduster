@@ -23,17 +23,14 @@ Options:
     -v, --version          Print the version and exit
     -a, --auth CREDS       Basic authentication in the format login:password
     -d, --directories      Identify and search directories
+    -i, --ignore CODES     List of comma separated invalid codes
+    -I, --list-ignore      List the default invalid codes
     -t, --threads NUM      Number of threads to use, default is 10
     -c, --cookies COOKIES  User-defined cookies in the format a1=v1,a2=v2
     -f, --file FILE        Entries file
 ";
 
-immutable vernum="0.5.1";
-
-/**
- * Default codes to ignore in answer to requests
- */
-immutable invalidCodes = [0, 400, 403, 404, 405, 502];
+immutable vernum="0.5.2";
 
 
 /**
@@ -52,6 +49,7 @@ string[] scanUrl(
             string baseUrl,
             const(string)[] entries,
             Request[] requestPool,
+            ushort[] invalidCodes,
             string[string] cookies) {
 
     try
@@ -117,12 +115,16 @@ int main(string[] args) {
     import std.getopt;
     import std.conv: to;
 
+    ushort[] defaultInvalidCodes = [0, 400, 403, 404, 405, 502];
+
     string           entryFile;
     bool             checkDirs;
     uint             numThreads = 10;
     string[string]   cookies;
     string           basicAuth;
     bool             versionWanted;
+    ushort[]         invalidCodes;
+    bool             listInvalidCodes;
 
     try {
         arraySep = ",";
@@ -133,6 +135,8 @@ int main(string[] args) {
                                 "d|directories", &checkDirs,
                                 "t|threads",     &numThreads,
                                 "c|cookies",     &cookies,
+                                "i|ignore",      &invalidCodes,
+                                "I|list-ignore", &listInvalidCodes,
                                 "v|version",     &versionWanted,
                                 "a|auth",        &basicAuth);
 
@@ -142,6 +146,10 @@ int main(string[] args) {
         }
         if (versionWanted) {
             writeln(vernum);
+            return 0;
+        }
+        if (listInvalidCodes) {
+            defaultInvalidCodes.map!(to!string).join(",").writeln;
             return 0;
         }
 
@@ -159,6 +167,9 @@ int main(string[] args) {
 
     auto entries = loadEntries(entryFile, checkDirs);
 
+
+    if (!invalidCodes.length)
+        invalidCodes = defaultInvalidCodes;
 
     Auth authenticator;
     if (basicAuth != "") {
@@ -194,7 +205,8 @@ int main(string[] args) {
                 baseUrl ~= "/";
 
             writeln("\n-- Scanning ", baseUrl, " --\n");
-            newUrls = scanUrl(baseUrl, entries, requestPool, cookies);
+            newUrls = scanUrl(baseUrl, entries, requestPool,
+                              invalidCodes, cookies);
         }
 
         baseUrls = newUrls.filter!(url => url !in oldUrls).array;

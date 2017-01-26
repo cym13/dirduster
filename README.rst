@@ -33,6 +33,8 @@ Documentation
         -v, --version          Print the version and exit
         -a, --auth CREDS       Basic authentication in the format login:password
         -d, --directories      Identify and search directories
+        -i, --ignore CODES     List of comma separated invalid codes
+        -I, --list-ignore      List the default invalid codes
         -t, --threads NUM      Number of threads to use, default is 10
         -c, --cookies COOKIES  User-defined cookies in the format a1=v1,a2=v2
         -f, --file FILE        Entries file
@@ -40,7 +42,6 @@ Documentation
 TODO
 ====
 
-- Specify your own list of invalid HTTP codes
 - Add custom HEADER headers
 - Allow the use of proxies
 - Allow using other methods
