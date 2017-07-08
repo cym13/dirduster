@@ -10,5 +10,12 @@
     "copyright": "Copyright © 2016, Cédric Picard",
     "license": "GPLv3",
 
-    "versions": ["StdLoggerDisableLogging"]
+    "versions": ["StdLoggerDisableLogging"],
+
+    "libs-posix": [
+        "ssl",
+        "crypto",
+        ":libssl.so.1.0.0",
+        ":libcrypto.so.1.0.0"
+    ]
 }
