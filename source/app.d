@@ -21,13 +21,15 @@ Arguments:
 Options:
     -h, --help             Print this help and exit
     -v, --version          Print the version and exit
+
     -a, --auth CREDS       Basic authentication in the format login:password
+    -c, --cookies COOKIES  User-defined cookies in the format a1=v1,a2=v2
     -d, --directories      Identify and search directories
+    -f, --file FILE        Entries file
+    -H, --headers HEADERS  User-defined headers in the format a1=v1,a2=v2
     -i, --ignore CODES     List of comma separated invalid codes
     -I, --list-ignore      List the default invalid codes
     -t, --threads NUM      Number of threads to use, default is 10
-    -c, --cookies COOKIES  User-defined cookies in the format a1=v1,a2=v2
-    -f, --file FILE        Entries file
 ";
 
 immutable vernum="0.5.2";
@@ -120,6 +122,7 @@ int main(string[] args) {
     string           entryFile;
     bool             checkDirs;
     uint             numThreads = 10;
+    string[string]   headers;
     string[string]   cookies;
     string           basicAuth;
     bool             versionWanted;
@@ -131,14 +134,15 @@ int main(string[] args) {
         auto arguments = getopt(args,
                                 std.getopt.config.bundling,
                                 std.getopt.config.caseSensitive,
-                                "f|file",        &entryFile,
-                                "d|directories", &checkDirs,
-                                "t|threads",     &numThreads,
+                                "a|auth",        &basicAuth,
                                 "c|cookies",     &cookies,
+                                "d|directories", &checkDirs,
+                                "f|file",        &entryFile,
+                                "H|headers",     &headers,
                                 "i|ignore",      &invalidCodes,
                                 "I|list-ignore", &listInvalidCodes,
-                                "v|version",     &versionWanted,
-                                "a|auth",        &basicAuth);
+                                "t|threads",     &numThreads,
+                                "v|version",     &versionWanted);
 
         if (arguments.helpWanted) {
             write(helpMsg);
@@ -188,6 +192,7 @@ int main(string[] args) {
     foreach (ref rq ; requestPool) {
         rq.sslSetVerifyPeer(false);
         rq.authenticator = authenticator;
+        rq.addHeaders(headers);
     }
 
 
