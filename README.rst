@@ -64,11 +64,12 @@ TODO
 Building
 ========
 
-Simply do:
+Use dub with the **safe-prod** build that optimizes the code without
+disabling safety features.
 
 ::
 
-    dub build -b plain
+    dub build -b safe-prod
 
 License
 =======

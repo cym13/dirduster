@@ -17,5 +17,12 @@
         "crypto",
         ":libssl.so.1.0.0",
         ":libcrypto.so.1.0.0"
-    ]
+    ],
+
+    "buildTypes": {
+        "safe-prod": {
+            "dflags-dmd": ["-O", "-inline"],
+            "dflags-ldc": ["-O", "-enable-inlining","-Hkeep-all-bodies"],
+        }
+    }
 }
