@@ -32,7 +32,7 @@ Options:
     -t, --threads NUM      Number of threads to use, default is 10
 ";
 
-immutable vernum="0.6.0";
+immutable vernum="0.6.1";
 
 
 /**
@@ -101,7 +101,8 @@ auto loadEntries(string entryFile, bool checkDirs) {
 
     if (entryFile == "-")
         results = stdin.byLineCopy(KeepTerminator.no).array;
-    results = entryFile.readText.splitLines(KeepTerminator.no).array;
+    else
+        results = entryFile.readText.splitLines(KeepTerminator.no).array;
 
     if (checkDirs) {
         results ~= results.filter!(u => !u.endsWith("/") && u.length > 0)
