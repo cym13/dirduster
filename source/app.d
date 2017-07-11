@@ -29,16 +29,17 @@ Options:
     -H, --headers HEADERS  User-defined headers in the format a1=v1,a2=v2
     -i, --ignore CODES     List of comma separated invalid codes
     -I, --list-ignore      List the default invalid codes
+    -p, --proxy PROXY_URL  Proxy url; may contain authentication data
     -t, --threads NUM      Number of threads to use, default is 10
 ";
 
-immutable vernum="0.6.1";
+immutable vernum="1.0.0";
 
 
 /**
  * Helper: add a cookie to a request
  */
-void setCookie(Request rq, string url, string attr, string val) {
+void setCookie(HTTPRequest rq, string url, string attr, string val) {
     string domain = url.split("/")[2];
     string path   = "/" ~ url.split("/")[3..$].join("/");
     rq.cookie(rq.cookie ~ Cookie(domain, path, attr, val));
@@ -50,7 +51,7 @@ void setCookie(Request rq, string url, string attr, string val) {
 string[] scanUrl(
             string baseUrl,
             const(string)[] entries,
-            Request[] requestPool,
+            HTTPRequest[] requestPool,
             ushort[] invalidCodes,
             string[string] cookies) {
 
@@ -122,15 +123,16 @@ int main(string[] args) {
 
     /* Setup options */
 
-    string           entryFile;
     bool             checkDirs;
-    uint             numThreads = 10;
-    string[string]   headers;
-    string[string]   cookies;
-    string           basicAuth;
-    bool             versionWanted;
-    ushort[]         invalidCodes;
     bool             listInvalidCodes;
+    bool             versionWanted;
+    string           basicAuth;
+    string           entryFile;
+    string           proxy;
+    string[string]   cookies;
+    string[string]   headers;
+    uint             numThreads = 10;
+    ushort[]         invalidCodes;
 
     try {
         arraySep = ",";
@@ -144,6 +146,7 @@ int main(string[] args) {
                                 "H|headers",     &headers,
                                 "i|ignore",      &invalidCodes,
                                 "I|list-ignore", &listInvalidCodes,
+                                "p|proxy",       &proxy,
                                 "t|threads",     &numThreads,
                                 "v|version",     &versionWanted);
 
@@ -196,13 +199,14 @@ int main(string[] args) {
     /* Setup the request pool */
 
     defaultPoolThreads(numThreads);
-    Request[] requestPool;
+    HTTPRequest[] requestPool;
     requestPool.length = numThreads;
 
     foreach (ref rq ; requestPool) {
         rq.sslSetVerifyPeer(false);
         rq.authenticator = authenticator;
         rq.addHeaders(headers);
+        rq.proxy = proxy;
     }
 
     /* Start scanning */

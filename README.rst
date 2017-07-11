@@ -37,8 +37,6 @@ Documentation
 
 ::
 
-    Fast brute force of web directories
-
     Usage: dirduster [options] -f FILE URL...
 
     Arguments:
@@ -55,13 +53,14 @@ Documentation
         -H, --headers HEADERS  User-defined headers in the format a1=v1,a2=v2
         -i, --ignore CODES     List of comma separated invalid codes
         -I, --list-ignore      List the default invalid codes
+        -p, --proxy PROXY_URL  Proxy url; may contain authentication data
         -t, --threads NUM      Number of threads to use, default is 10
 
 TODO
 ====
 
-- Allow the use of proxies
-- Allow using other methods
+- Allow using other methods -> unlikely to be soon as dlang-requests doesn't
+  support any besides GET and POST.
 
 Building
 ========
