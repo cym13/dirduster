@@ -60,6 +60,7 @@ TODO
 
 - Allow the use of proxies
 - Allow using other methods
+- Allow reading urls from stdin
 
 Building
 ========
