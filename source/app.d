@@ -119,6 +119,8 @@ int main(string[] args) {
 
     ushort[] defaultInvalidCodes = [0, 400, 403, 404, 405, 502];
 
+    /* Setup options */
+
     string           entryFile;
     bool             checkDirs;
     uint             numThreads = 10;
@@ -162,6 +164,8 @@ int main(string[] args) {
         return 1;
     }
 
+    /* Load url list */
+
     string[] baseUrls = args[1..$];
 
     if (!entryFile.length || !baseUrls.length) {
@@ -171,6 +175,7 @@ int main(string[] args) {
 
     auto entries = loadEntries(entryFile, checkDirs);
 
+    /* Option check */
 
     if (!invalidCodes.length)
         invalidCodes = defaultInvalidCodes;
@@ -184,6 +189,10 @@ int main(string[] args) {
         authenticator = new BasicAuthentication(login, password);
     }
 
+    if (baseUrls.any!((string x) => !x.startsWith("http")))
+        writeln("WARNING: make sure you specified the right protocol");
+
+    /* Setup the request pool */
 
     defaultPoolThreads(numThreads);
     Request[] requestPool;
@@ -195,9 +204,7 @@ int main(string[] args) {
         rq.addHeaders(headers);
     }
 
-
-    if (baseUrls.any!((string x) => !x.startsWith("http")))
-        writeln("WARNING: make sure you specified the right protocol");
+    /* Start scanning */
 
     bool[string] oldUrls;
     while (baseUrls.length) {
