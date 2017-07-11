@@ -12,9 +12,13 @@ The main tool used for this task is DirBuster_ which is written in Java and
 uses a graphical interface. This makes it hard enough to use for me to prefer
 writting another tool with a more proper interface.
 
+.. _DirBuster: https://www.owasp.org/index.php/Category:OWASP_DirBuster_Project
+
 There also exist dirb_ but it doesn't allow the user to specify the number of
 threads which means a massive slowdown on my machine which wasn't acceptable
 anymore.
+
+.. _dirb: http://dirb.sourceforge.net/
 
 Documentation
 =============
