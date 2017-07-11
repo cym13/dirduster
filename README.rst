@@ -23,11 +23,13 @@ anymore.
 How can I change the user-agent or use basic authentication?
 ============================================================
 
-Setup custom headers using the -H option:
+Setup custom headers using the --header option:
 
 ::
 
     dirduster -H "User-Agent=Whatever,Basic=YTphCg==" -f pathlist.txt test.com
+
+For basic authentication you can also use the --auth option.
 
 
 Documentation
