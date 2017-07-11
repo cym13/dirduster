@@ -32,7 +32,7 @@ Options:
     -t, --threads NUM      Number of threads to use, default is 10
 ";
 
-immutable vernum="0.5.2";
+immutable vernum="0.6.0";
 
 
 /**
