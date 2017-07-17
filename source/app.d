@@ -84,6 +84,7 @@ string[] scanUrl(
 
             writefln("%s\tCODE:%d SIZE:%d",
                      r.uri.uri, r.code, r.responseBody.length);
+            stdout.flush;
             newUrlsPool[i] ~= r.uri.uri;
         }
     }
