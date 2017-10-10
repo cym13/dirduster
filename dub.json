@@ -4,7 +4,7 @@
         "Cédric Picard"
     ],
     "dependencies": {
-        "requests": "~>0.3.2",
+        "requests": "~>0.5.2",
     },
     "description": "Fast web directory bruteforce",
     "copyright": "Copyright © 2016, Cédric Picard",

@@ -34,8 +34,7 @@ Options:
     -t, --threads NUM      Number of threads to use, default is 10
 ";
 
-immutable vernum="1.0.1";
-
+immutable vernum="1.0.2";
 
 /**
  * Helper: add a cookie to a request
@@ -78,7 +77,15 @@ string[] scanUrl(
             cookies.each!((k,v) => rq.setCookie(baseUrl ~ entry, k, v));
 
             string url = baseUrl ~ entry;
-            auto   r   = rq.get(url);
+
+            HTTPResponse r;
+
+            try {
+                r = rq.get(url);
+            } catch (TimeoutException) {
+                stderr.writeln("Timeout: ", url);
+                continue;
+            }
 
             if (invalidCodes.canFind(r.code))
                 continue;
@@ -230,6 +237,8 @@ int main(string[] args) {
 
         baseUrls = newUrls.filter!(url => url !in oldUrls).array;
     }
+
+    writeln("-- END --");
 
     return 0;
 }
