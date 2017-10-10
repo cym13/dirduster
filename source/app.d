@@ -7,6 +7,7 @@ import std.parallelism;
 import requests;
 import requests.http: Cookie;
 
+
 /**
  * Help message, standard unix format compatible with docopt.
  */
@@ -39,10 +40,10 @@ immutable vernum="1.0.1";
 /**
  * Helper: add a cookie to a request
  */
-void setCookie(HTTPRequest rq, string url, string attr, string val) {
+void setCookie(ref HTTPRequest rq, string url, string attr, string val) {
     string domain = url.split("/")[2];
     string path   = "/" ~ url.split("/")[3..$].join("/");
-    rq.cookie(rq.cookie ~ Cookie(domain, path, attr, val));
+    rq.cookie(rq.cookie ~ Cookie(path, domain, attr, val));
 }
 
 /**
