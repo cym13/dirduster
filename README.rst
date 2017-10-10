@@ -62,6 +62,8 @@ TODO
 - Allow using other methods -> unlikely to be soon as dlang-requests doesn't
   support any besides GET and POST.
 
+- Allow disabling recursive search
+
 Building
 ========
 
