@@ -31,10 +31,11 @@ Options:
     -i, --ignore CODES     List of comma separated invalid codes
     -I, --list-ignore      List the default invalid codes
     -p, --proxy PROXY_URL  Proxy url; may contain authentication data
+    -s, --singlepass       Disable recursion on findings
     -t, --threads NUM      Number of threads to use, default is 10
 ";
 
-immutable vernum="1.0.2";
+immutable vernum="1.1.0";
 
 /**
  * Helper: add a cookie to a request
@@ -135,6 +136,7 @@ int main(string[] args) {
     bool             checkDirs;
     bool             listInvalidCodes;
     bool             versionWanted;
+    bool             singlePass;
     string           basicAuth;
     string           entryFile;
     string           proxy;
@@ -156,6 +158,7 @@ int main(string[] args) {
                                 "i|ignore",      &invalidCodes,
                                 "I|list-ignore", &listInvalidCodes,
                                 "p|proxy",       &proxy,
+                                "s|singlepass",  &singlePass,
                                 "t|threads",     &numThreads,
                                 "v|version",     &versionWanted);
 
@@ -234,6 +237,9 @@ int main(string[] args) {
             newUrls = scanUrl(baseUrl, entries, requestPool,
                               invalidCodes, cookies);
         }
+
+        if (singlePass)
+            break;
 
         baseUrls = newUrls.filter!(url => url !in oldUrls).array;
     }
