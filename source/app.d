@@ -5,7 +5,6 @@ import std.algorithm;
 import std.parallelism;
 
 import requests;
-import requests.http: Cookie;
 
 
 /**
@@ -41,6 +40,7 @@ immutable vernum="1.1.0";
  * Helper: add a cookie to a request
  */
 void setCookie(ref HTTPRequest rq, string url, string attr, string val) {
+    import requests.utils: Cookie;
     string domain = url.split("/")[2];
     string path   = "/" ~ url.split("/")[3..$].join("/");
     rq.cookie(rq.cookie ~ Cookie(path, domain, attr, val));
