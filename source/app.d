@@ -32,6 +32,7 @@ Options:
     -p, --proxy PROXY_URL  Proxy url; may contain authentication data
     -s, --singlepass       Disable recursion on findings
     -t, --threads NUM      Number of threads to use, default is 10
+    -u, --user-agent UA    Set custom user agent
 ";
 
 immutable vernum="1.1.1";
@@ -144,6 +145,8 @@ int main(string[] args) {
     string[string]   headers;
     uint             numThreads = 10;
     ushort[]         invalidCodes;
+    string           userAgent = "Mozilla/5.0 (Windows NT 6.1; WOW64; "
+                               ~ "Trident/7.0; rv:11.0) like Gecko";
 
     try {
         arraySep = ",";
@@ -160,6 +163,7 @@ int main(string[] args) {
                                 "p|proxy",       &proxy,
                                 "s|singlepass",  &singlePass,
                                 "t|threads",     &numThreads,
+                                "u|user-agent",  &userAgent,
                                 "v|version",     &versionWanted);
 
         if (arguments.helpWanted) {
@@ -207,6 +211,9 @@ int main(string[] args) {
 
     if (baseUrls.any!((string x) => !x.startsWith("http")))
         writeln("WARNING: make sure you specified the right protocol");
+
+    if ("User-Agent" !in headers)
+        headers["User-Agent"] = userAgent;
 
     /* Setup the request pool */
 

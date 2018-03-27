@@ -56,6 +56,7 @@ Documentation
         -p, --proxy PROXY_URL  Proxy url; may contain authentication data
         -s, --singlepass       Disable recursion on findings
         -t, --threads NUM      Number of threads to use, default is 10
+        -u, --user-agent UA    Set custom user agent
 
 TODO
 ====
