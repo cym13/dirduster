@@ -57,6 +57,7 @@ Documentation
         -s, --singlepass       Disable recursion on findings
         -t, --threads NUM      Number of threads to use, default is 10
         -u, --user-agent UA    Set custom user agent
+        -x, --exclude REGEX    Exclude pages matching REGEX
 
 TODO
 ====

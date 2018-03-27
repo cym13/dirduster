@@ -1,8 +1,9 @@
 
-import std.stdio;
 import std.array;
 import std.algorithm;
 import std.parallelism;
+import std.regex;
+import std.stdio;
 
 import requests;
 
@@ -33,6 +34,7 @@ Options:
     -s, --singlepass       Disable recursion on findings
     -t, --threads NUM      Number of threads to use, default is 10
     -u, --user-agent UA    Set custom user agent
+    -x, --exclude REGEX    Exclude pages matching REGEX
 ";
 
 immutable vernum="1.2.0";
@@ -55,7 +57,8 @@ string[] scanUrl(
             const(string)[] entries,
             HTTPRequest[] requestPool,
             ushort[] invalidCodes,
-            string[string] cookies) {
+            string[string] cookies,
+            Regex!char exclude) {
 
     try
         URI(baseUrl);
@@ -91,6 +94,13 @@ string[] scanUrl(
 
             if (invalidCodes.canFind(r.code))
                 continue;
+
+            if (!exclude.empty) {
+                import std.string: assumeUTF;
+                auto data = r.responseBody.data.assumeUTF;
+                if (!matchFirst(data, exclude).empty)
+                    continue;
+            }
 
             writefln("%s\tCODE:%d SIZE:%d",
                      r.uri.uri, r.code, r.responseBody.length);
@@ -141,6 +151,7 @@ int main(string[] args) {
     string           basicAuth;
     string           entryFile;
     string           proxy;
+    string           exclude;
     string[string]   cookies;
     string[string]   headers;
     uint             numThreads = 10;
@@ -164,6 +175,7 @@ int main(string[] args) {
                                 "s|singlepass",  &singlePass,
                                 "t|threads",     &numThreads,
                                 "u|user-agent",  &userAgent,
+                                "x|exclude",     &exclude,
                                 "v|version",     &versionWanted);
 
         if (arguments.helpWanted) {
@@ -215,6 +227,10 @@ int main(string[] args) {
     if ("User-Agent" !in headers)
         headers["User-Agent"] = userAgent;
 
+    Regex!char regExclude;
+    if (exclude)
+        regExclude = regex(exclude);
+
     /* Setup the request pool */
 
     defaultPoolThreads(numThreads);
@@ -242,7 +258,7 @@ int main(string[] args) {
 
             writeln("\n-- Scanning ", baseUrl, " --\n");
             newUrls = scanUrl(baseUrl, entries, requestPool,
-                              invalidCodes, cookies);
+                              invalidCodes, cookies, regExclude);
         }
 
         if (singlePass)
