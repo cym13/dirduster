@@ -34,7 +34,7 @@ Options:
     -t, --threads NUM      Number of threads to use, default is 10
 ";
 
-immutable vernum="1.1.0";
+immutable vernum="1.1.1";
 
 /**
  * Helper: add a cookie to a request
