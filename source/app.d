@@ -35,7 +35,7 @@ Options:
     -u, --user-agent UA    Set custom user agent
 ";
 
-immutable vernum="1.1.1";
+immutable vernum="1.2.0";
 
 /**
  * Helper: add a cookie to a request
