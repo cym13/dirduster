@@ -31,13 +31,13 @@ Options:
     -i, --ignore CODES     List of comma separated invalid codes
     -I, --list-ignore      List the default invalid codes
     -p, --proxy PROXY_URL  Proxy url; may contain authentication data
-    -s, --singlepass       Disable recursion on findings
+    -s, --single-pass      Disable recursion on findings
     -t, --threads NUM      Number of threads to use, default is 10
     -u, --user-agent UA    Set custom user agent
     -x, --exclude REGEX    Exclude pages matching REGEX
 ";
 
-immutable vernum="1.2.0";
+immutable vernum="1.3.0";
 
 /**
  * Helper: add a cookie to a request
@@ -172,7 +172,7 @@ int main(string[] args) {
                                 "i|ignore",      &invalidCodes,
                                 "I|list-ignore", &listInvalidCodes,
                                 "p|proxy",       &proxy,
-                                "s|singlepass",  &singlePass,
+                                "s|singl-epass", &singlePass,
                                 "t|threads",     &numThreads,
                                 "u|user-agent",  &userAgent,
                                 "x|exclude",     &exclude,
