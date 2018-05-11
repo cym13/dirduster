@@ -46,7 +46,7 @@ void setCookie(ref HTTPRequest rq, string url, string attr, string val) {
     import requests.utils: Cookie;
     string domain = url.split("/")[2];
     string path   = "/" ~ url.split("/")[3..$].join("/");
-    rq.cookie(rq.cookie ~ Cookie(path, domain, attr, val));
+    rq.cookie(rq.cookie ~ [Cookie(path, domain, attr, val)]);
 }
 
 /**
