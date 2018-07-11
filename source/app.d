@@ -90,6 +90,24 @@ string[] scanUrl(
             } catch (TimeoutException) {
                 stderr.writeln("Timeout: ", url);
                 continue;
+            } catch (RequestException e) {
+                // This is hideous, but requests leaves me no choice
+                if (e.msg.canFind("Unknown content-encoding")) {
+                    stderr.writeln("Ignoring because encoding error: ", url);
+                    continue;
+                }
+                else {
+                    throw e;
+                }
+            } catch (Exception e) {
+                // Ditto
+                if (e.msg.canFind("ssl connect failed")) {
+                    stderr.writeln("Ignoring because SSL error: ", url);
+                    continue;
+                }
+                else {
+                    throw e;
+                }
             }
 
             if (invalidCodes.canFind(r.code))
