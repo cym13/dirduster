@@ -24,10 +24,12 @@ Options:
     -v, --version          Print the version and exit
 
     -a, --auth CREDS       Basic authentication in the format login:password
-    -c, --cookies COOKIES  User-defined cookies in the format a1=v1,a2=v2
+    -c, --cookies COOKIES  User-defined cookies in the format Cookie=Value
+                           Use multiple times for multiple cookies
     -d, --directories      Identify and search directories
     -f, --file FILE        Entries file
-    -H, --headers HEADERS  User-defined headers in the format a1=v1,a2=v2
+    -H, --headers HEADERS  User-defined headers in the format Header=Value
+                           Use multiple times for multiple headers
     -i, --ignore CODES     List of comma separated invalid codes
     -I, --list-ignore      List the default invalid codes
     -p, --proxy PROXY_URL  Proxy url; may contain authentication data
@@ -37,7 +39,7 @@ Options:
     -x, --exclude REGEX    Exclude pages matching REGEX
 ";
 
-immutable vernum="1.3.2";
+immutable vernum="1.4.0";
 
 /**
  * Helper: add a cookie to a request
@@ -178,7 +180,6 @@ int main(string[] args) {
                                ~ "Trident/7.0; rv:11.0) like Gecko";
 
     try {
-        arraySep = ",";
         auto arguments = getopt(args,
                                 std.getopt.config.bundling,
                                 std.getopt.config.caseSensitive,
