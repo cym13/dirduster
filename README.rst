@@ -20,22 +20,13 @@ anymore.
 
 .. _dirb: http://dirb.sourceforge.net/
 
-How can I change the user-agent or use basic authentication?
-============================================================
-
-Setup custom headers using the --header option:
-
-::
-
-    dirduster -H "User-Agent=Whatever,Basic=YTphCg==" -f pathlist.txt test.com
-
-For basic authentication you can also use the --auth option.
-
 
 Documentation
 =============
 
 ::
+
+    Fast brute force of web directories
 
     Usage: dirduster [options] -f FILE URL...
 
@@ -47,10 +38,11 @@ Documentation
         -v, --version          Print the version and exit
 
         -a, --auth CREDS       Basic authentication in the format login:password
-        -c, --cookies COOKIES  User-defined cookies in the format a1=v1,a2=v2
+        -c, --cookies COOKIES  User-defined cookies in the format Cookie=Value
+                               Use multiple times for multiple cookies
         -d, --directories      Identify and search directories
         -f, --file FILE        Entries file
-        -H, --headers HEADERS  User-defined headers in the format header=value
+        -H, --headers HEADERS  User-defined headers in the format Header=Value
                                Use multiple times for multiple headers
         -i, --ignore CODES     List of comma separated invalid codes
         -I, --list-ignore      List the default invalid codes
@@ -69,12 +61,11 @@ TODO
 Building
 ========
 
-Use dub with the **safe-prod** build that optimizes the code without
-disabling safety features.
+Use dub:
 
 ::
 
-    dub build -b safe-prod
+    dub build -b release
 
 License
 =======
