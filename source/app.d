@@ -39,7 +39,7 @@ Options:
     -x, --exclude REGEX    Exclude pages matching REGEX
 ";
 
-immutable vernum="1.4.0";
+immutable vernum="1.4.1";
 
 /**
  * Helper: add a cookie to a request
@@ -136,7 +136,8 @@ string[] scanUrl(
  * Load entries from a given file
  */
 auto loadEntries(string entryFile, bool checkDirs) {
-    import std.file:   readText;
+    import std.conv:   to;
+    import std.file:   read;
     import std.string: splitLines;
 
     string[] results;
@@ -144,7 +145,7 @@ auto loadEntries(string entryFile, bool checkDirs) {
     if (entryFile == "-")
         results = stdin.byLineCopy(KeepTerminator.no).array;
     else
-        results = entryFile.readText.splitLines(KeepTerminator.no).array;
+        results = entryFile.read.to!string.splitLines(KeepTerminator.no).array;
 
     if (checkDirs) {
         results ~= results.filter!(u => !u.endsWith("/") && u.length > 0)
