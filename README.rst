@@ -46,17 +46,12 @@ Documentation
                                Use multiple times for multiple headers
         -i, --ignore CODES     List of comma separated invalid codes
         -I, --list-ignore      List the default invalid codes
+        -m, --method           HTTP method to use; defaults to GET
         -p, --proxy PROXY_URL  Proxy url; may contain authentication data
         -s, --single-pass      Disable recursion on findings
         -t, --threads NUM      Number of threads to use, default is 10
         -u, --user-agent UA    Set custom user agent
         -x, --exclude REGEX    Exclude pages matching REGEX
-
-TODO
-====
-
-- Allow using other methods -> unlikely to be soon as dlang-requests doesn't
-  support any besides GET and POST.
 
 Building
 ========
@@ -81,4 +76,4 @@ Contact
 ::
 
     Main developper: Cédric Picard
-    Email:           cedric.picard@efrei.net
+    Email:           cpicard@purrfect.fr

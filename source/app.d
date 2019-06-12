@@ -32,6 +32,7 @@ Options:
                            Use multiple times for multiple headers
     -i, --ignore CODES     List of comma separated invalid codes
     -I, --list-ignore      List the default invalid codes
+    -m, --method           HTTP method to use; defaults to GET
     -p, --proxy PROXY_URL  Proxy url; may contain authentication data
     -s, --single-pass      Disable recursion on findings
     -t, --threads NUM      Number of threads to use, default is 10
@@ -39,7 +40,7 @@ Options:
     -x, --exclude REGEX    Exclude pages matching REGEX
 ";
 
-immutable vernum="1.4.2";
+immutable vernum="1.5.0";
 
 /**
  * Helper: add a cookie to a request
@@ -67,7 +68,8 @@ string[] scanUrl(
             Request[] requestPool,
             ushort[] invalidCodes,
             string[string] cookies,
-            Regex!char exclude) {
+            Regex!char exclude,
+            string method) {
 
     try
         URI(baseUrl);
@@ -95,7 +97,7 @@ string[] scanUrl(
             Response r;
 
             try {
-                r = rq.get(url);
+                r = rq.execute(method, url);
             } catch (TimeoutException) {
                 stderr.writeln("Timeout: ", url);
                 continue;
@@ -178,6 +180,7 @@ int main(string[] args) {
     bool             singlePass;
     string           basicAuth;
     string           entryFile;
+    string           method = "GET";
     string           proxy;
     string           exclude;
     string[string]   cookies;
@@ -198,6 +201,7 @@ int main(string[] args) {
                                 "H|headers",     &headers,
                                 "i|ignore",      &invalidCodes,
                                 "I|list-ignore", &listInvalidCodes,
+                                "m|method",      &method,
                                 "p|proxy",       &proxy,
                                 "s|singl-epass", &singlePass,
                                 "t|threads",     &numThreads,
@@ -285,7 +289,7 @@ int main(string[] args) {
 
             writeln("\n-- Scanning ", baseUrl, " --\n");
             newUrls = scanUrl(baseUrl, entries, requestPool,
-                              invalidCodes, cookies, regExclude);
+                              invalidCodes, cookies, regExclude, method);
         }
 
         if (singlePass)
