@@ -39,16 +39,23 @@ Options:
     -x, --exclude REGEX    Exclude pages matching REGEX
 ";
 
-immutable vernum="1.4.1";
+immutable vernum="1.4.2";
 
 /**
  * Helper: add a cookie to a request
  */
-void setCookie(ref HTTPRequest rq, string url, string attr, string val) {
-    import requests.utils: Cookie;
-    string domain = url.split("/")[2];
-    string path   = "/" ~ url.split("/")[3..$].join("/");
-    rq.cookie(rq.cookie ~ [Cookie(path, domain, attr, val)]);
+void setCookies(ref Request rq, string[string] raw_cookies, string url) {
+    import requests.utils: Cookie, Cookies;
+    import std.typecons: RefCounted;
+
+    Cookie[] cookies;
+    foreach (attr, val ; raw_cookies) {
+        string domain = url.split("/")[2].split(":")[0];
+        string path   = "/" ~ url.split("/")[3..$].join("/");
+        cookies ~= Cookie(path, domain, attr, val);
+    }
+
+    rq.cookie(RefCounted!Cookies(cookies));
 }
 
 /**
@@ -57,7 +64,7 @@ void setCookie(ref HTTPRequest rq, string url, string attr, string val) {
 string[] scanUrl(
             string baseUrl,
             const(string)[] entries,
-            HTTPRequest[] requestPool,
+            Request[] requestPool,
             ushort[] invalidCodes,
             string[string] cookies,
             Regex!char exclude) {
@@ -81,11 +88,11 @@ string[] scanUrl(
             continue;
 
         foreach (entry ; entries[firstEntry .. lastEntry]) {
-            cookies.each!((k,v) => rq.setCookie(baseUrl ~ entry, k, v));
+            rq.setCookies(cookies, baseUrl ~ entry);
 
             string url = baseUrl ~ entry;
 
-            HTTPResponse r;
+            Response r;
 
             try {
                 r = rq.get(url);
@@ -254,7 +261,7 @@ int main(string[] args) {
     /* Setup the request pool */
 
     defaultPoolThreads(numThreads);
-    HTTPRequest[] requestPool;
+    Request[] requestPool;
     requestPool.length = numThreads;
 
     foreach (ref rq ; requestPool) {
