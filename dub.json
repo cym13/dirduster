@@ -4,7 +4,7 @@
         "Cédric Picard"
     ],
     "dependencies": {
-        "requests": "~>1.0.0",
+        "requests": "~>1.0.0"
     },
     "description": "Fast web directory bruteforce",
     "copyright": "Copyright © 2016, Cédric Picard",
@@ -15,7 +15,7 @@
     "buildTypes": {
         "safe-prod": {
             "dflags-dmd": ["-O", "-inline"],
-            "dflags-ldc": ["-O", "-enable-inlining","-Hkeep-all-bodies"],
+            "dflags-ldc": ["-O", "-enable-inlining","-Hkeep-all-bodies"]
         }
     }
 }
