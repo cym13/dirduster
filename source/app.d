@@ -110,6 +110,9 @@ string[] scanUrl(
                 else {
                     throw e;
                 }
+            } catch (ConnectError e) {
+                stderr.writeln("ERROR: Cannot connect to host");
+                break;
             } catch (Exception e) {
                 // Ditto
                 if (e.msg.canFind("ssl connect failed")) {
@@ -151,10 +154,20 @@ auto loadEntries(string entryFile, bool checkDirs) {
 
     string[] results;
 
-    if (entryFile == "-")
+    if (entryFile == "-") {
         results = stdin.byLineCopy(KeepTerminator.no).array;
-    else
-        results = entryFile.read.to!string.splitLines(KeepTerminator.no).array;
+    }
+    else {
+        try {
+            results = entryFile
+                        .read
+                        .to!string
+                        .splitLines(KeepTerminator.no)
+                        .array;
+        } catch (std.file.FileException ex) {
+            stderr.writeln("ERROR: Cannot read ", entryFile);
+        }
+    }
 
     if (checkDirs) {
         results ~= results.filter!(u => !u.endsWith("/") && u.length > 0)
@@ -186,7 +199,7 @@ int main(string[] args) {
     string[string]   cookies;
     string[string]   headers;
     uint             numThreads = 10;
-    ushort[]         invalidCodes;
+    string           invalidCodesStr;
     string           userAgent = "Mozilla/5.0 (Windows NT 6.1; WOW64; "
                                ~ "Trident/7.0; rv:11.0) like Gecko";
 
@@ -199,7 +212,7 @@ int main(string[] args) {
                                 "d|directories", &checkDirs,
                                 "f|file",        &entryFile,
                                 "H|headers",     &headers,
-                                "i|ignore",      &invalidCodes,
+                                "i|ignore",      &invalidCodesStr,
                                 "I|list-ignore", &listInvalidCodes,
                                 "m|method",      &method,
                                 "p|proxy",       &proxy,
@@ -238,10 +251,23 @@ int main(string[] args) {
 
     auto entries = loadEntries(entryFile, checkDirs);
 
+    if (!entries.length) {
+        writeln("No entries to test");
+        return 0;
+    }
+
     /* Option check */
 
-    if (!invalidCodes.length)
-        invalidCodes = defaultInvalidCodes;
+    ushort[] invalidCodes = defaultInvalidCodes;
+    if (invalidCodesStr.length) {
+        try {
+            invalidCodes = invalidCodesStr.split(",").map!(to!ushort).array;
+        } catch (std.conv.ConvException ex) {
+            stderr.writeln(helpMsg);
+            stderr.writeln("ERROR: --ignore expects numbers");
+            return 1;
+        }
+    }
 
     Auth authenticator;
     if (basicAuth != "") {
