@@ -40,7 +40,7 @@ Options:
     -x, --exclude REGEX    Exclude pages matching REGEX
 ";
 
-immutable vernum="1.5.0";
+immutable vernum="1.5.1";
 
 /**
  * Helper: add a cookie to a request
