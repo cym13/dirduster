@@ -5,6 +5,12 @@ DirDuster is a web directory bruteforcing tool similar to DirBuster.
 It allows you to quickly check for the presence of files or directories in
 order to detect potential flaws in the way the web server is configured.
 
+Visit `my blog`__ for a complete presentation!
+
+.. _purrfect: http://breakpoint.purrfect.fr/article/dirduster_presentation.html
+
+__ purrfect_
+
 Why DirDuster?
 ==============
 
@@ -19,7 +25,6 @@ threads which means a massive slowdown on my machine which wasn't acceptable
 anymore.
 
 .. _dirb: http://dirb.sourceforge.net/
-
 
 Documentation
 =============
