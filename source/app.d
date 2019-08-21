@@ -28,7 +28,7 @@ Options:
                            Use multiple times for multiple cookies
     -d, --directories      Identify and search directories
     -f, --file FILE        Entries file
-    -H, --headers HEADERS  User-defined headers in the format Header=Value
+    -H, --headers HEADERS  User-defined headers in the format Header:Value
                            Use multiple times for multiple headers
     -i, --ignore CODES     List of comma separated invalid codes
     -I, --list-ignore      List the default invalid codes
@@ -40,7 +40,7 @@ Options:
     -x, --exclude REGEX    Exclude pages matching REGEX
 ";
 
-immutable vernum="1.5.1";
+immutable vernum="1.6.0";
 
 /**
  * Helper: add a cookie to a request
@@ -182,6 +182,8 @@ auto loadEntries(string entryFile, bool checkDirs) {
 int main(string[] args) {
     import std.getopt;
     import std.conv: to;
+    import std.typecons: tuple;
+    import std.string: stripLeft;
 
     ushort[] defaultInvalidCodes = [0, 400, 403, 404, 405, 502];
 
@@ -197,7 +199,7 @@ int main(string[] args) {
     string           proxy;
     string           exclude;
     string[string]   cookies;
-    string[string]   headers;
+    string[]         _headers;
     uint             numThreads = 10;
     string           invalidCodesStr;
     string           userAgent = "Mozilla/5.0 (Windows NT 6.1; WOW64; "
@@ -211,7 +213,7 @@ int main(string[] args) {
                                 "c|cookies",     &cookies,
                                 "d|directories", &checkDirs,
                                 "f|file",        &entryFile,
-                                "H|headers",     &headers,
+                                "H|headers",     &_headers,
                                 "i|ignore",      &invalidCodesStr,
                                 "I|list-ignore", &listInvalidCodes,
                                 "m|method",      &method,
@@ -257,6 +259,10 @@ int main(string[] args) {
     }
 
     /* Option check */
+
+    string[string] headers = _headers.map!(l => l.findSplit(":"))
+                                     .map!(t => tuple(t[0], t[2].stripLeft))
+                                     .assocArray;
 
     ushort[] invalidCodes = defaultInvalidCodes;
     if (invalidCodesStr.length) {
