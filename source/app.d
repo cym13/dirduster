@@ -40,7 +40,7 @@ Options:
     -x, --exclude REGEX    Exclude pages matching REGEX
 ";
 
-immutable vernum="1.6.0";
+immutable vernum="1.6.1";
 
 /**
  * Helper: add a cookie to a request
@@ -218,7 +218,7 @@ int main(string[] args) {
                                 "I|list-ignore", &listInvalidCodes,
                                 "m|method",      &method,
                                 "p|proxy",       &proxy,
-                                "s|singl-epass", &singlePass,
+                                "s|single-pass", &singlePass,
                                 "t|threads",     &numThreads,
                                 "u|user-agent",  &userAgent,
                                 "x|exclude",     &exclude,
