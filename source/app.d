@@ -4,6 +4,7 @@ import std.algorithm;
 import std.parallelism;
 import std.regex;
 import std.stdio;
+import std.conv;
 
 import requests;
 
@@ -26,6 +27,7 @@ Options:
     -a, --auth CREDS       Basic authentication in the format login:password
     -c, --cookies COOKIES  User-defined cookies in the format Cookie=Value
                            Use multiple times for multiple cookies
+    -C, --client-cert CERT Load a client certificate for authentication
     -d, --directories      Identify and search directories
     -f, --file FILE        Entries file
     -H, --headers HEADERS  User-defined headers in the format Header:Value
@@ -40,7 +42,7 @@ Options:
     -x, --exclude REGEX    Exclude pages matching REGEX
 ";
 
-immutable vernum="1.6.1";
+immutable vernum="1.7.0";
 
 /**
  * Helper: add a cookie to a request
@@ -149,7 +151,7 @@ string[] scanUrl(
  */
 auto loadEntries(string entryFile, bool checkDirs) {
     import std.conv:   to;
-    import std.file:   read;
+    import std.file:   read, FileException;
     import std.string: splitLines;
 
     string[] results;
@@ -164,7 +166,7 @@ auto loadEntries(string entryFile, bool checkDirs) {
                         .to!string
                         .splitLines(KeepTerminator.no)
                         .array;
-        } catch (std.file.FileException ex) {
+        } catch (FileException ex) {
             stderr.writeln("ERROR: Cannot read ", entryFile);
         }
     }
@@ -179,11 +181,20 @@ auto loadEntries(string entryFile, bool checkDirs) {
 }
 
 
+bool readable(string path) {
+    import std.stdio: File;
+    import std.exception: collectException;
+
+    return collectException(File(path, "r")) is null;
+}
+
+
 int main(string[] args) {
     import std.getopt;
     import std.conv: to;
     import std.typecons: tuple;
     import std.string: stripLeft;
+    import std.file: exists;
 
     ushort[] defaultInvalidCodes = [0, 400, 403, 404, 405, 502];
 
@@ -199,6 +210,7 @@ int main(string[] args) {
     string           proxy;
     string           exclude;
     string[string]   cookies;
+    string           clientCert;
     string[]         _headers;
     uint             numThreads = 10;
     string           invalidCodesStr;
@@ -211,6 +223,7 @@ int main(string[] args) {
                                 std.getopt.config.caseSensitive,
                                 "a|auth",        &basicAuth,
                                 "c|cookies",     &cookies,
+                                "C|client-cert", &clientCert,
                                 "d|directories", &checkDirs,
                                 "f|file",        &entryFile,
                                 "H|headers",     &_headers,
@@ -235,6 +248,10 @@ int main(string[] args) {
         if (listInvalidCodes) {
             defaultInvalidCodes.map!(to!string).join(",").writeln;
             return 0;
+        }
+        if (clientCert != "" && !readable(clientCert)) {
+            stderr.writeln("Unreadable file: ", clientCert);
+            return 1;
         }
 
     } catch (GetOptException ex) {
@@ -305,6 +322,9 @@ int main(string[] args) {
         rq.authenticator = authenticator;
         rq.addHeaders(headers);
         rq.proxy = proxy;
+
+        if (clientCert != "")
+            rq.sslSetCertFile(clientCert);
     }
 
     /* Start scanning */
